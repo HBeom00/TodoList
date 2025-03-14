@@ -3,18 +3,18 @@ import axios from "axios";
 
 // Create
 export const addTodo = async (newTodo: PostType) => {
-  await axios.post("http://localhost:3000/todos", newTodo);
+  await axios.post(`${process.env.NEXT_PUBLIC_GLITCH_URL}`, newTodo);
 };
 
 // Read
 export const fetchTodos = async () => {
-  const res = await axios.get("http://localhost:3000/todos");
+  const res = await axios.get(`${process.env.NEXT_PUBLIC_GLITCH_URL}`);
   return res.data;
 };
 
 // Delete
 export const deleteTodo = async (id: string) => {
-  await axios.delete(`http://localhost:3000/todos/${id}`);
+  await axios.delete(`${process.env.NEXT_PUBLIC_GLITCH_URL}/${id}`);
 };
 
 // Update-post
@@ -25,14 +25,14 @@ export const updateTodo = async ({
   id: string;
   contents: string;
 }) => {
-  await axios.patch(`http://localhost:3000/todos/${id}`, {
+  await axios.patch(`${process.env.NEXT_PUBLIC_GLITCH_URL}/${id}`, {
     contents,
   });
 };
 
 // Update-complete
 export const completeTodo = async (todo: PostType) => {
-  await axios.patch(`http://localhost:3000/todos/${todo.id}`, {
+  await axios.patch(`${process.env.NEXT_PUBLIC_GLITCH_URL}/${todo.id}`, {
     isDone: !todo.isDone,
   });
 };
