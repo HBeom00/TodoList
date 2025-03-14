@@ -6,10 +6,17 @@ import axios from "axios";
 import { FormEvent, useState } from "react";
 
 const TodoForm = () => {
-  const [title, setTitle] = useState("");
-  const [contents, setContents] = useState("");
+  const [title, setTitle] = useState<string>("");
+  const [contents, setContents] = useState<string>("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editContent, setEditContent] = useState<string>("");
   const queryClient = useQueryClient();
+  const commonInputCSS =
+    "border border-solid border-black rounded-[4px] px-[8px] py-[2px]";
+  const commonBtnCSS =
+    "border border-solid border-black rounded-[4px] px-[8px] py-[2px] cursor-pointer hover:text-white hover:bg-black transition duration-300";
 
+  console.log(editingId, "id 값 확인");
   const fetchTodos = async () => {
     const res = await axios.get("http://localhost:3000/todos");
     return res.data;
@@ -28,8 +35,57 @@ const TodoForm = () => {
     await axios.post("http://localhost:3000/todos", newTodo);
   };
 
-  const { mutate } = useMutation({
+  const deleteTodo = async (id: string) => {
+    await axios.delete(`http://localhost:3000/todos/${id}`);
+  };
+
+  const updateTodo = async ({
+    id,
+    contents,
+  }: {
+    id: string;
+    contents: string;
+  }) => {
+    await axios.patch(`http://localhost:3000/todos/${id}`, {
+      contents,
+    });
+  };
+
+  const completeTodo = async (todo: PostType) => {
+    await axios.patch(`http://localhost:3000/todos/${todo.id}`, {
+      isDone: !todo.isDone,
+    });
+  };
+
+  // ADD
+  const { mutate: addFunc } = useMutation({
     mutationFn: addTodo,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["todos"] });
+    },
+  });
+
+  // DELETE
+  const { mutate: deleteFunc } = useMutation({
+    mutationFn: deleteTodo,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["todos"] });
+    },
+  });
+
+  // UPDATE
+  const { mutate: updateFunc } = useMutation({
+    mutationFn: updateTodo,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["todos"] });
+      setEditingId(null);
+      setEditContent("");
+    },
+  });
+
+  // COMPLETE
+  const { mutate: completeFunc } = useMutation({
+    mutationFn: completeTodo,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["todos"] });
     },
@@ -59,53 +115,161 @@ const TodoForm = () => {
       contents,
       isDone: false,
     };
-    mutate(newTodo);
+    addFunc(newTodo);
+    setTitle("");
+    setContents("");
   };
 
   return (
-    <div>
-      <h1>Todos</h1>
-      <form onSubmit={handleSubmit}>
+    <div className="flex flex-col justify-center items-center gap-[20px]">
+      <h1 className="text-[36px] font-bold">Todos</h1>
+      <form onSubmit={handleSubmit} className="flex gap-[16px]">
         <input
           type="text"
           placeholder="Title"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
+          className={commonInputCSS}
         />
         <input
           type="text"
           placeholder="Content"
           value={contents}
           onChange={(e) => setContents(e.target.value)}
+          className={commonInputCSS}
         />
-        <button type="submit">추가</button>
+        <button type="submit" className={commonBtnCSS}>
+          추가
+        </button>
       </form>
 
-      <h2>해야할 일</h2>
-      <ul>
+      <h2 className="text-[24px] font-bold">해야할 일</h2>
+      <ul className="w-full flex justify-center items-center flex-wrap gap-[32px]">
         {todoList.map((todo) => {
           return (
-            <li key={todo.id}>
-              <h3>{todo.title}</h3>
-              <p>{todo.contents}</p>
-              <p>{todo.isDone ? "완료됨" : "미완료됨"}</p>
-              <button>삭제</button>
-              <button>완료</button>
+            <li
+              key={todo.id}
+              className="w-[20%] border border-solid border-black rounded-[4px] p-[8px] flex flex-col gap-[8px] break-words"
+            >
+              <div className="flex justify-between">
+                <h3 className="block font-bold break-words whitespace-normal overflow-hidden">
+                  {todo.title}
+                </h3>
+                <p className="text-[14px]">{todo.isDone ? "완료" : "미완료"}</p>
+              </div>
+              <p className="text-[14px]">
+                {editingId === todo.id ? (
+                  <textarea
+                    defaultValue={todo.contents}
+                    className={commonInputCSS}
+                    onChange={(e) => setEditContent(e.target.value)}
+                  />
+                ) : (
+                  todo.contents
+                )}
+              </p>
+              <div className="flex justify-start items-center gap-[4px]">
+                <button
+                  onClick={() => deleteFunc(todo.id)}
+                  className={commonBtnCSS}
+                >
+                  삭제
+                </button>
+
+                {editingId === todo.id ? (
+                  <button
+                    onClick={() =>
+                      updateFunc({ id: todo.id, contents: editContent })
+                    }
+                    className={commonBtnCSS}
+                  >
+                    저장
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setEditingId(todo.id);
+                      setEditContent(todo.contents);
+                    }}
+                    className={commonBtnCSS}
+                  >
+                    수정
+                  </button>
+                )}
+
+                <button
+                  onClick={() => completeFunc(todo)}
+                  className={commonBtnCSS}
+                >
+                  완료
+                </button>
+              </div>
             </li>
           );
         })}
       </ul>
 
-      <h2>완료된 일</h2>
-      <ul>
+      <h2 className="text-[24px] font-bold">완료된 일</h2>
+      <ul className="w-full flex justify-center items-center gap-[32px]">
         {doneList.map((todo) => {
           return (
-            <li key={todo.id}>
-              <h3>{todo.title}</h3>
-              <p>{todo.contents}</p>
-              <p>{todo.isDone ? "완료됨" : "미완료됨"}</p>
-              <button>삭제</button>
-              <button>취소</button>
+            <li
+              key={todo.id}
+              className="w-[20%] border border-solid border-black rounded-[4px] p-[8px] flex flex-col gap-[8px]"
+            >
+              <div className="flex justify-between">
+                <h3 className="block font-bold break-words whitespace-normal overflow-hidden">
+                  {todo.title}
+                </h3>
+                <p className="text-[14px]">{todo.isDone ? "완료" : "미완료"}</p>
+              </div>
+              <p className="text-[14px]">
+                {editingId === todo.id ? (
+                  <textarea
+                    defaultValue={todo.contents}
+                    className={commonInputCSS}
+                    onChange={(e) => setEditContent(e.target.value)}
+                  />
+                ) : (
+                  todo.contents
+                )}
+              </p>
+              <div className="flex justify-start items-center gap-[4px]">
+                <button
+                  onClick={() => deleteFunc(todo.id)}
+                  className={commonBtnCSS}
+                >
+                  삭제
+                </button>
+
+                {editingId === todo.id ? (
+                  <button
+                    onClick={() =>
+                      updateFunc({ id: todo.id, contents: editContent })
+                    }
+                    className={commonBtnCSS}
+                  >
+                    저장
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setEditingId(todo.id);
+                      setEditContent(todo.contents);
+                    }}
+                    className={commonBtnCSS}
+                  >
+                    수정
+                  </button>
+                )}
+
+                <button
+                  onClick={() => completeFunc(todo)}
+                  className={commonBtnCSS}
+                >
+                  취소
+                </button>
+              </div>
             </li>
           );
         })}
