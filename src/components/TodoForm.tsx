@@ -1,10 +1,15 @@
 "use client";
 
 import { PostType } from "@/app/types/post";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
+import { FormEvent, useState } from "react";
 
 const TodoForm = () => {
+  const [title, setTitle] = useState("");
+  const [contents, setContents] = useState("");
+  const queryClient = useQueryClient();
+
   const fetchTodos = async () => {
     const res = await axios.get("http://localhost:3000/todos");
     return res.data;
@@ -17,6 +22,17 @@ const TodoForm = () => {
   } = useQuery({
     queryKey: ["todos"],
     queryFn: fetchTodos,
+  });
+
+  const addTodo = async (newTodo: PostType) => {
+    await axios.post("http://localhost:3000/todos", newTodo);
+  };
+
+  const { mutate } = useMutation({
+    mutationFn: addTodo,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["todos"] });
+    },
   });
 
   if (isPending) {
@@ -35,13 +51,34 @@ const TodoForm = () => {
     (el: PostType) => el.isDone === true
   );
 
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    const newTodo = {
+      id: crypto.randomUUID(),
+      title,
+      contents,
+      isDone: false,
+    };
+    mutate(newTodo);
+  };
+
   return (
     <div>
       <h1>Todos</h1>
-      <form>
-        <input type="text" />
-        <input type="text" />
-        <button>추가</button>
+      <form onSubmit={handleSubmit}>
+        <input
+          type="text"
+          placeholder="Title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+        />
+        <input
+          type="text"
+          placeholder="Content"
+          value={contents}
+          onChange={(e) => setContents(e.target.value)}
+        />
+        <button type="submit">추가</button>
       </form>
 
       <h2>해야할 일</h2>
@@ -50,7 +87,7 @@ const TodoForm = () => {
           return (
             <li key={todo.id}>
               <h3>{todo.title}</h3>
-              <p>{todo.content}</p>
+              <p>{todo.contents}</p>
               <p>{todo.isDone ? "완료됨" : "미완료됨"}</p>
               <button>삭제</button>
               <button>완료</button>
@@ -65,7 +102,7 @@ const TodoForm = () => {
           return (
             <li key={todo.id}>
               <h3>{todo.title}</h3>
-              <p>{todo.content}</p>
+              <p>{todo.contents}</p>
               <p>{todo.isDone ? "완료됨" : "미완료됨"}</p>
               <button>삭제</button>
               <button>취소</button>

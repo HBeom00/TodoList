@@ -1,6 +1,6 @@
 export type PostType = {
   id: string;
   title: string;
-  content: string;
+  contents: string;
   isDone: boolean;
 };
