@@ -1,8 +1,14 @@
 "use client";
 
-import { PostType } from "@/app/types/post";
+import {
+  addTodo,
+  completeTodo,
+  deleteTodo,
+  fetchTodos,
+  updateTodo,
+} from "@/api/apiInstance";
+import { PostType } from "@/types/post";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import axios from "axios";
 import { FormEvent, useState } from "react";
 
 const TodoForm = () => {
@@ -16,12 +22,6 @@ const TodoForm = () => {
   const commonBtnCSS =
     "border border-solid border-black rounded-[4px] px-[8px] py-[2px] cursor-pointer hover:text-white hover:bg-black transition duration-300";
 
-  console.log(editingId, "id 값 확인");
-  const fetchTodos = async () => {
-    const res = await axios.get("http://localhost:3000/todos");
-    return res.data;
-  };
-
   const {
     data: todos,
     isPending,
@@ -30,32 +30,6 @@ const TodoForm = () => {
     queryKey: ["todos"],
     queryFn: fetchTodos,
   });
-
-  const addTodo = async (newTodo: PostType) => {
-    await axios.post("http://localhost:3000/todos", newTodo);
-  };
-
-  const deleteTodo = async (id: string) => {
-    await axios.delete(`http://localhost:3000/todos/${id}`);
-  };
-
-  const updateTodo = async ({
-    id,
-    contents,
-  }: {
-    id: string;
-    contents: string;
-  }) => {
-    await axios.patch(`http://localhost:3000/todos/${id}`, {
-      contents,
-    });
-  };
-
-  const completeTodo = async (todo: PostType) => {
-    await axios.patch(`http://localhost:3000/todos/${todo.id}`, {
-      isDone: !todo.isDone,
-    });
-  };
 
   // ADD
   const { mutate: addFunc } = useMutation({
@@ -99,10 +73,12 @@ const TodoForm = () => {
     return <div>조회 중 오류가 발생했습니다.</div>;
   }
 
+  // 해야할 일
   const todoList: PostType[] = todos.filter(
     (el: PostType) => el.isDone === false
   );
 
+  // 완료된 일
   const doneList: PostType[] = todos.filter(
     (el: PostType) => el.isDone === true
   );
