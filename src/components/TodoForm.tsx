@@ -99,7 +99,7 @@ const TodoForm = () => {
   return (
     <div className="flex flex-col justify-center items-center gap-[20px]">
       <h1 className="text-[36px] font-bold">Todos</h1>
-      <form onSubmit={handleSubmit} className="flex gap-[16px]">
+      <form onSubmit={handleSubmit} className="flex gap-[16px] max-sm:flex-col">
         <input
           type="text"
           placeholder="Title"
@@ -120,12 +120,12 @@ const TodoForm = () => {
       </form>
 
       <h2 className="text-[24px] font-bold">해야할 일</h2>
-      <ul className="w-full flex justify-center items-center flex-wrap gap-[32px]">
+      <ul className="w-full flex justify-center items-center flex-wrap gap-[32px] max-sm:flex-col">
         {todoList.map((todo) => {
           return (
             <li
               key={todo.id}
-              className="w-[20%] border border-solid border-black rounded-[4px] p-[8px] flex flex-col gap-[8px] break-words"
+              className="w-[20%] max-lg:w-[40%] border border-solid border-black rounded-[4px] p-[8px] flex flex-col gap-[8px] break-words"
             >
               <div className="flex justify-between">
                 <h3 className="block font-bold break-words whitespace-normal overflow-hidden">
@@ -186,12 +186,12 @@ const TodoForm = () => {
       </ul>
 
       <h2 className="text-[24px] font-bold">완료된 일</h2>
-      <ul className="w-full flex justify-center items-center gap-[32px]">
+      <ul className="w-full flex justify-center items-center flex-wrap gap-[32px] max-sm:flex-col">
         {doneList.map((todo) => {
           return (
             <li
               key={todo.id}
-              className="w-[20%] border border-solid border-black rounded-[4px] p-[8px] flex flex-col gap-[8px]"
+              className="w-[20%] max-lg:w-[40%] border border-solid border-black rounded-[4px] p-[8px] flex flex-col gap-[8px]"
             >
               <div className="flex justify-between">
                 <h3 className="block font-bold break-words whitespace-normal overflow-hidden">
